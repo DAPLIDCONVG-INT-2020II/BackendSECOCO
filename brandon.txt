@@ -1,0 +1,165 @@
+https://dev.to/gautemeekolsen/til-firestore-get-collection-with-async-await-a5l
+
+
+var key = "null";
+
+/*app.get('/:id', async (req, res) => {
+    
+    
+    res.end();
+});*/
+var ubicaciones = [];
+var ubicacionesDATA = [];
+var listaCoincidenciaFecha = [];
+
+app.get("/:id", async (req, res) => {
+  //res.end();
+  //console.log("......." + JSON.stringify(req.params.id));
+  var id = req.params;
+  //console.log(id.id);
+  try {
+    key = await firebase
+      .database()
+      .ref("usuarios/Naturales/")
+      .orderByChild("I")
+      .equalTo("C.C. " + id.id)
+      .once("value");
+    key = Object.keys(key.val())[0];
+    //console.log("#### USUAIRO: " + key);
+    ubicaciones = await firebase
+      .database()
+      .ref("relaciones/" + key)
+      .once("value");
+    ubicaciones = ubicaciones.val();
+    //console.log("#### UBICACIONES: " + ubicaciones);
+
+    ubicacionesDATA = [];
+    for (var i = 0; i < ubicaciones.length; i++) {
+      var datos = await firebase
+        .database()
+        .ref("ubicaciones/" + ubicaciones[i])
+        .once("value");
+      //console.log(JSON.stringify(datos.val()));
+      var data = datos.val();
+      ubicacionesDATA.push(data);
+    }
+    //console.log("#### UBICACIONES DATA: ");
+    //console.log(ubicacionesDATA);
+
+    listaCoincidenciaFecha = [];
+    var hI;
+    var hF;
+    var lA;
+    var lO;
+    var llaves = [];
+
+    for (var i = 0; i < ubicacionesDATA.length; i++) {
+      hI = ubicacionesDATA[i].HI;
+      hF = ubicacionesDATA[i].HF;
+      lA = ubicacionesDATA[i].Lat;
+      lO = ubicacionesDATA[i].Lon;
+      //console.log(ubicacionesDATA[i].F + " " + ubicacionesDATA[i].Lat + " " + ubicacionesDATA[i].Lon + " " + ubicacionesDATA[i].HF + " " + ubicacionesDATA[i].HI);
+      var result = await firebase
+        .database()
+        .ref("ubicaciones/")
+        .orderByChild("F")
+        .equalTo(ubicacionesDATA[i].F)
+        .once("value");
+      llaves = Object.keys(result.val());
+      //console.log( llaves);
+      result = result.val();
+
+      //console.log("---------------" + ubicacionesDATA[i].F);
+
+      for (var j = 0; j < result.length; j++) {
+        var obj = result[j];
+        //console.log(" F:" + obj.F);
+        if (hI <= obj.HI && obj.HI <= hF) {
+          //console.log("HORA " + hI + " " + obj.HI + " " + hF);
+          if (lA - 0.00001 <= obj.Lat && obj.Lat <= lA + 0.00001) {
+            // console.log("LATITUD " + (lA - 0.00001) + " " + obj.Lat + " " + (lA + 0.00001));
+            if (lO - 0.00001 <= obj.Lon && obj.Lon <= lO + 0.00001) {
+              //console.log("LONGITUD " + (lO - 0.00001) + " " + obj.Lon + " " + (lO + 0.00001) );
+              listaCoincidenciaFecha.push(llaves[j]);
+            }
+          }
+        }
+      }
+    }
+    console.log(listaCoincidenciaFecha);
+    for (var h = 0; h < ubicaciones.length; h++) {
+      var i;
+      if ((i = listaCoincidenciaFecha.indexOf(ubicaciones[h]))) {
+        listaCoincidenciaFecha.splice(i, 1);
+      }
+    }
+    console.log(listaCoincidenciaFecha);
+    var nombres = await firebase
+      .database()
+      .ref("relaciones/")
+      .once("value");
+    var llaveNombres = Object.keys(nombres.val());
+    nombres = nombres.val();
+    console.log(nombres);
+    //console.log(llaveNombres);
+    var sospechosos = [];
+
+    console.log("-----------------");
+    listaCoincidenciaFecha = listaCoincidenciaFecha.map(function(item) {
+      return parseInt(item, 10);
+    });
+    for (var n = 0; n < llaveNombres.length; n++) {
+      var relacion = await firebase
+        .database()
+        .ref("relaciones/" + llaveNombres[n])
+        .once("value");
+      relacion = relacion.val();
+      const coincidencia = listaCoincidenciaFecha.some(r =>
+        relacion.includes(r)
+      );
+      if (coincidencia && key != llaveNombres[n]) {
+        sospechosos.push(llaveNombres[n]);
+      }
+    }
+    var correos = [];
+    for (var c = 0; c < sospechosos.length; c++) {
+      var correo = await firebase
+        .database()
+        .ref("usuarios/Naturales/" + sospechosos[c])
+        .once("value");
+      correo = correo.val();
+      correos.push(correo.M);
+    }
+    console.log(correos);
+    
+    var transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: "secocoda@gmail.com",
+        pass: "Secoco2021:)"
+      }
+    });
+    
+    var mailOptions = {
+      from: "secocoda@gmail.com",
+      to: "",
+      subject: "SECOCO - Revisa tus sintomas",
+      text: "Es posible que hayas tenido contacto con alguien con COVID"
+    };
+    for(var s = 0; s < correos.length; s++) {
+      mailOptions.to= correos[s];
+      transporter.sendMail(mailOptions, function(error, info) {
+      if (error) {
+        console.log(error);
+      } else {
+        console.log("Email sent: " + info.response);
+      }
+    });
+    }
+    
+    
+  } catch (error) {
+    console.log(error);
+  }
+  res.send("E");
+});
