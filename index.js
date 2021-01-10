@@ -12,21 +12,56 @@ admin.initializeApp({
 let db = admin.firestore();
 
 const app = express();
+const bodyParser = require("body-parser");
+app.use(bodyParser.json());
 
 const port = process.env.PORT || 3000;
 
 app.listen(port, () => console.log("Server escuchando en el puerto 3000"));
 app.use(express.static("public"));
+
 /*-------------------------------------------------- PLANTILLA GENERAL ------------------------------------------------------*/
-app.get("/:id", async (req, res) => {
+/*app.get("/:id", async (req, res) => {
   console.log(req.params.id);
   
   let usuarioPositivo = await db.collection('USUARIOS').where("C","==", "0" ).limit(1).get();
   const llaveUsuario= usuarioPositivo.docs[0].id;
-    /*for (const doc of usuario.docs) {
+    for (const doc of usuario.docs) {
         console.log(doc.id, '=>', doc.data());
-    }*/
+    }
   res.send("Recibido");
+});*/
+
+///////////////////////////////////////////////////////// REGISTRO /////////////////////////////////////////////////////////
+
+app.post("/REGISTRO", async (req, res) => {
+  let llave = req.body.usuario;
+
+  let rN = req.body.nombre + " " + req.body.apellido;
+  let rC = req.body.contraseña;
+  let rM = req.body.correo;
+  let rI = req.body.tipoID + " " + req.body.ID;
+  let rE = "000000";
+  let rX = "-";
+  let rF = req.body.fechaNacimiento;
+  let rD = req.body.direccion + ":" + req.body.localidad;
+  
+  var data = {
+    N: rN,
+    C: rC,
+    M: rM,
+    I: rI,
+    E: rE,
+    X: rX,
+    F: rF,
+    D: rD
+  };
+  //console.log(llave, data);
+  await db
+    .collection("U_NATURALES")
+    .doc(llave)
+    .set(data);
+  res.send("Usuario añadido!");
 });
 
 /////////////////////////////////////// NOTIFICACIÓN DE CONTACTO CON USUARIO(+) COVID /////////////////////////////////////// 
