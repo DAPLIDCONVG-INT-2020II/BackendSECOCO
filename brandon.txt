@@ -1,4 +1,5 @@
-https://dev.to/gautemeekolsen/til-firestore-get-collection-with-async-await-a5l
+FIRESTORE peticiones asincronicas ----> https://dev.to/gautemeekolsen/til-firestore-get-collection-with-async-await-a5l
+POSTMAN manipular peticiones con express ----> https://medium.com/faun/posting-to-your-express-server-2bf0a0b516d0
 
 
 var key = "null";
