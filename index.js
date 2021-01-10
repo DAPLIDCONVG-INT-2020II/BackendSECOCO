@@ -32,9 +32,36 @@ app.use(express.static("public"));
   res.send("Recibido");
 });*/
 
+///////////////////////////////////////////////////////// INGRESO //////////////////////////////////////////////////////////
+
+/* Formato de entrada
+{   "usuario":"",
+    "contrasena":"",
+    "tipoUsuario" : "" }*/
+
+app.get("/ingreso", async (req, res) => {
+  const busqueda = await db
+    .collection(req.body.tipoUsuario)
+    .doc(req.body.usuario)
+    .get()
+    .then(snap => {
+      if (snap.exists) {
+        if (snap.data().C == req.body.contrasena) {
+          res.status(200).send({ ingreso: true });
+        } else {
+          res.status(401).send({ ingreso: false });
+        }
+      } else {
+        res.status(401).send({ ingreso: false });
+      }
+    });
+});
+
 ///////////////////////////////////////////////////////// REGISTRO /////////////////////////////////////////////////////////
 
 app.post("/REGISTRO", async (req, res) => {
+  //Revisar cedula y usuario - en caso de existencia retornar
+
   let llave = req.body.usuario;
 
   let rN = req.body.nombre + " " + req.body.apellido;
@@ -45,7 +72,7 @@ app.post("/REGISTRO", async (req, res) => {
   let rX = "-";
   let rF = req.body.fechaNacimiento;
   let rD = req.body.direccion + ":" + req.body.localidad;
-  
+
   var data = {
     N: rN,
     C: rC,
@@ -61,12 +88,72 @@ app.post("/REGISTRO", async (req, res) => {
     .collection("U_NATURALES")
     .doc(llave)
     .set(data);
+
+  //Agregar el usuario a las Relaciones y añadir el arreglo de Ubicaciones
+  await db
+    .collection("RELACIONES")
+    .doc(llave)
+    .set({ U: [] });
+
   res.send("Usuario añadido!");
 });
 
-/////////////////////////////////////// NOTIFICACIÓN DE CONTACTO CON USUARIO(+) COVID /////////////////////////////////////// 
+///////////////////////////////////////////////// CAMBIO CONTRASEÑA /////////////////////////////////////////////////////////
 
-/*app.get("/:id", async (req, res) => {
+//////////////////////////////////////////////// REPORTE UBICACIÓN /////////////////////////////////////////////////////////
+/*
+{   "U": "",
+    "F": "",
+    "HF": ,
+    "HI": ,
+    "Lat": ,
+    "Lon": }
+*/
+
+app.post("/reporteUbicacion", async (req, res) => {
+  const rutas = ["UBICACIONES", "RELACIONES"];
+  let indexUbicacion = 0;
+  //Se puede mejorar agregando un campo en la base de datos
+  try {
+    await db
+      .collection(rutas[0])
+      .get()
+      .then(snap => {
+        indexUbicacion = snap.size;
+      });
+    await db
+      .collection(rutas[0])
+      .doc(indexUbicacion + "")
+      .set({
+        F: req.body.F,
+        HF: req.body.HF,
+        HI: req.body.HI,
+        Lat: req.body.Lat,
+        Lon: req.body.Lon
+      });
+    await db
+      .collection(rutas[1])
+      .doc(req.body.U)
+      .update({
+        U: admin.firestore.FieldValue.arrayUnion(indexUbicacion + "")
+      });
+    res.status(200).send({ nuevaUbicacion: true });
+  } catch (error) {
+    res.status(400).send({ nuevaUbicacion: false });
+  }
+});
+
+///////////////////////////////////////////////// NOTIFICAR CITA ////////////////////////////////////////////////////////////
+
+//Falta corregir
+app.get("/notificarCita", async (req, res) => {
+  const usuarios = await db.collection("U_NATURALES").where("X", "!=", "- S");
+});
+
+/////////////////////////////////////// NOTIFICACIÓN DE CONTACTO CON USUARIO(+) COVID ///////////////////////////////////////
+
+app.get("/RESULTADO-EXAMEN", async (req, res) => {
+  // Incluir actualizacion de resultado y en caso de ser positivo ejecutar rutina de contacto
   console.log(req.params.id);
   var usuarioPositivo = await db
     .collection("U_NATURALES")
@@ -119,23 +206,30 @@ app.post("/REGISTRO", async (req, res) => {
     });
   }
   console.log(ubicacionesCoincidentes);
-  
+
   var nombresSospechosos = await db
     .collection("RELACIONES")
-    .where("U", "array-contains-any", ubicacionesCoincidentes).get();
-  var nombres =[];
-  nombresSospechosos.docs.forEach(n => {nombres.push(n.id)});
+    .where("U", "array-contains-any", ubicacionesCoincidentes)
+    .get();
+  var nombres = [];
+  nombresSospechosos.docs.forEach(n => {
+    nombres.push(n.id);
+  });
   console.log(nombres);
   for (var c = 0; c < nombres.length; c++) {
     var correo = await db
       .collection("U_NATURALES")
       .doc(nombres[c])
       .get();
-    correo=correo.data().M;
+    correo = correo.data().M;
     enviarCorreo(correo);
   }
-  
+
   res.end();
 });
-*/
-function enviarCorreo(correo){ console.log(correo);}
+
+
+/////////////////////////////////////// ENVIO DE CORREOS (se puede incluir en un objeto aparte) ///////////////////////////////////////
+function enviarCorreo(correo) {
+  console.log(correo);
+}
