@@ -1,29 +1,66 @@
 <!DOCTYPE html>
 <html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>HTML</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--Link estilos
+  <link rel="stylesheet" href="styles.css"> -->
+  </head>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Roboto&display=swap");
 
-<head>
-  <meta charset="utf-8">
-  <title>HTML</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
-    body{
-        background-color: black;
-        font-family: 'Roboto', sans-serif;
+    * {
+      box-sizing: border-box;
+      padding: 0;
     }
-    .center{
-        top:20%;
-        margin: auto;
-        color: white;
+    
+    html {
+      width: 100vw;
+      height: 100vh;
     }
-</style>
-<body >
-    <div class="center">
-        <h1 style="text-decoration: underline; font-size: 46px">SECOCO 🔥firestore 🚀 Node.js ☋</h1>
-        <h4 style="font-size: 18px">Creador por Brandon R, Diego M, Cristian C</h4>
+    
+    body {
+      background-color: #0c2461;
+      font-family: "Roboto", sans-serif;
+    }
+    
+    .flex {
+      display: flex;
+      font-size: 40px;
+    }
+    
+    .block {
+      color: white;
+      width: 50vw;
+      height: 50vh;
+      margin: auto;
+      text-align: center;
+      padding-top: 12vh;
+    }
+    
+    img {
+      width: 100%;
+      height: auto;
+    }
+  </style>
+  <body>
+    <div class="flex">
+      <div class="block">
+        <h1>
+          SECOCO <br />
+          🔥 Firestore <br />
+          🚀 Node.js
+        </h1>
+        <h4 style="font-size: 18px">
+          Creador por Brandon R, Diego M, Cristian C
+        </h4>
+      </div>
+      <div class="block">
+        <img
+          src="https://64.media.tumblr.com/24af2bad23099e7adccd100f36a8dff0/2c53b409f59c64e0-3d/s2048x3072/d1ca3f018c36761ed0a448451423cb025d6b4d19.png"
+        />
+      </div>
     </div>
-</body>
-
-
-</html>s
+  </body>
+</html>
