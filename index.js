@@ -21,6 +21,24 @@ const port = process.env.PORT || 3000;
 app.listen(port, () => console.log("Server escuchando en el puerto 3000"));
 app.use(express.static("public"));
 
+//Cargar las Zonas al iniciar el Servidor
+var zonas = [];
+cargarZonas();
+async function cargarZonas() {
+  await db
+    .collection("ZONA")
+    .get()
+    .then(snap => {
+      snap.forEach(zona => {
+        const obj = {
+          I: zona.id,
+          Z: zona.data()
+        };
+        zonas.push(obj);
+      });
+    });
+}
+
 /*-------------------------------------------------- PLANTILLA GENERAL ------------------------------------------------------*/
 /*app.get("/:id", async (req, res) => {
   console.log(req.params.id);
@@ -148,21 +166,7 @@ app.post("/REPORTE-UBICACION", async (req, res) => {
   let i = 0;
   let idZona = 0;
   let tieneZona = false;
-  let zonas = [];
   try {
-    await db
-      .collection("ZONA")
-      .get()
-      .then(snap => {
-        snap.forEach(zona => {
-          const obj = {
-            I: zona.id,
-            Z: zona.data()
-          };
-          zonas.push(obj);
-        });
-      });
-    
     while (!tieneZona || i < zonas.length) {
       if (
         req.body.Lat >= zonas[i].Z.LatMi &&
@@ -208,9 +212,10 @@ app.post("/REPORTE-UBICACION", async (req, res) => {
       .update({ C: indexUbicacion + 1 });
 
     res.status(200).send({ nuevaUbicacion: true });
-    res.end();
   } catch (error) {
     res.status(400).send({ nuevaUbicacion: false });
+  } finally {
+    res.end();
   }
 });
 
@@ -227,7 +232,7 @@ app.put("/ACTUALIZAR-SINTOMAS", async (req, res) => {
 
 ///////////////////////////////////////////////// NOTIFICAR CITA ////////////////////////////////////////////////////////////
 
-//Falta corregir
+/*Estructura { "E" :"" (sintomas) } responde lista de usuarios*/
 app.get("/SOLICITAR-USUARIOS-NOTIFICAR-CITA", async (req, res) => {
   let listaUsuarios = [];
   try {
@@ -238,7 +243,7 @@ app.get("/SOLICITAR-USUARIOS-NOTIFICAR-CITA", async (req, res) => {
       .get()
       .then(snap => {
         snap.forEach(doc => {
-          if (doc.X != "- S") {
+          if (doc.data().X != "S") {
             const datos = {
               U: doc.id,
               N: doc.data().N,
@@ -250,13 +255,18 @@ app.get("/SOLICITAR-USUARIOS-NOTIFICAR-CITA", async (req, res) => {
           }
         });
       });
-
     res.status(200).send(listaUsuarios);
   } catch (error) {
     res.status(400).send({ listaUsuarios: false });
+  } finally {
+    res.end();
   }
 });
 
+/*Estructura { 
+  "E" :"" (sintomas),
+  "F" :"" (fecha)
+}  envia correos*/
 app.post("/ENVIAR-CORREO-USUARIOS-NOTIFICAR-CITA", async (req, res) => {
   let listaUsuarios = [];
   try {
@@ -266,7 +276,7 @@ app.post("/ENVIAR-CORREO-USUARIOS-NOTIFICAR-CITA", async (req, res) => {
       .get()
       .then(snap => {
         snap.forEach(doc => {
-          if (doc.X != "- S") {
+          if (doc.data().X != "S") {
             const datos = {
               M: doc.data().M,
               N: doc.data().N,
@@ -280,7 +290,6 @@ app.post("/ENVIAR-CORREO-USUARIOS-NOTIFICAR-CITA", async (req, res) => {
           }
         });
       });
-
     for (var i = 0; i < listaUsuarios.length; i++) {
       email.enviarCorreo(
         listaUsuarios[i].M,
@@ -290,11 +299,52 @@ app.post("/ENVIAR-CORREO-USUARIOS-NOTIFICAR-CITA", async (req, res) => {
       await db
         .collection("U_NATURALES")
         .doc(listaUsuarios[i].U)
-        .update({ X: "- S" });
+        .update({ X: "S" });
     }
-    res.end();
+    res.status(200).send({ correosEnviados: true });
   } catch (error) {
-    res.status(400).send({ listaUsuarios: false });
+    res.status(400).send({ correosEnviados: false });
+  } finally {
+    res.end();
+  }
+});
+
+/*Estructura { 
+  "E" :"" (sintomas),
+  "F" :"" (fecha)
+}  envia correo*/
+app.post("/ENVIAR-CORREO-USUARIO", async (req, res) => {
+  try {
+    let datos;
+    await db
+      .collection("U_NATURALES")
+      .doc(req.body.U)
+      .get()
+      .then(snap => {
+        datos = {
+          M: snap.data().M,
+          N: snap.data().N,
+          I: snap.data().I,
+          E: snap.data().E,
+          D: snap.data().D,
+          U: snap.id,
+          F: req.body.F
+        };
+      });
+    email.enviarCorreo(
+      datos.M,
+      "SeCoCo - Citación para Prueba COVID-19",
+      datos
+    );
+    await db
+      .collection("U_NATURALES")
+      .doc(datos.U)
+      .update({ X: "S" });
+    res.status(200).send({ correoEnviado: true });
+  } catch (error) {
+    res.status(400).send({ correoEnviado: false });
+  } finally {
+    res.end();
   }
 });
 
@@ -308,7 +358,6 @@ app.get("/RESULTADO-EXAMEN", async (req, res) => {
   "resultado" : "";
   }
   */
-
   let ID = req.body.ID;
   let tipoID = req.body.tipoID;
   let resultado = req.body.resultado;
@@ -397,6 +446,91 @@ app.get("/RESULTADO-EXAMEN", async (req, res) => {
   }
   res.end("Dato actualizado" + info);
 });
+
+/////////////////////////////////////////////// REPORTE ZONA ////////////////////////////////////////////////////////////////
+
+/*A (Activo) - I (Inactivo) - S(Solicitado) - P(Pendiente) -N (Examen no Tomado)*/
+/*Estructura { Z : "" (id Zona)}*/
+
+app.get("/REPORTE-ZONA", async (req, res) => {
+  try {
+    let activos = 0,
+      inactivos = 0,
+      solicitados = 0,
+      pendientes = 0,
+      examenNoTomado = 0,
+      total = 0,
+      porcentajeActivos = 0;
+    let correoUsuarios = [];
+
+    await db
+      .collection("U_NATURALES")
+      .where("Z", "==", req.body.Z)
+      .get()
+      .then(snap => {
+        snap.forEach(doc => {
+          const estado = doc.data().X;
+          if (estado == "A") {
+            activos += 1;
+          } else if (estado == "I") {
+            inactivos += 1;
+          } else if (estado == "S") {
+            solicitados += 1;
+          } else if (estado == "P") {
+            pendientes += 1;
+          } else if (estado == "N") {
+            examenNoTomado += 1;
+          }
+          correoUsuarios.push(doc.data().M);
+        });
+      });
+    total = activos + inactivos + solicitados + pendientes + examenNoTomado;
+    porcentajeActivos = (activos / total) * 100;
+
+    console.log(zonas.find(zona => zona.I == req.body.Z).Z.N);
+    
+    //No estoy seguro de hacerlo aquí o en otra peticion
+    if (porcentajeActivos > 50) {
+      await db
+        .collection("ZONA")
+        .doc(req.body.Z)
+        .update({ C: "A" });
+
+      const nombreZona = zonas.find(zona => zona.I == req.body.Z).Z.N;
+      for (var i = 0; i < correoUsuarios.length; i++) {
+        const informacion = {
+          PA: porcentajeActivos,
+          ZN: nombreZona
+        };
+        email.enviarCorreo(
+          correoUsuarios[i],
+          "SeCoCo - Aislamiento de Zona",
+          informacion
+        );
+      }
+    } else {
+      await db
+        .collection("ZONA")
+        .doc(req.body.Z)
+        .update({ C: "I" });
+    }
+
+    const resultados = {
+      A: activos,
+      I: inactivos,
+      S: solicitados,
+      P: pendientes,
+      N: examenNoTomado,
+      PA: porcentajeActivos
+    };
+    res.status(200).send(resultados);
+  } catch (error) {
+    res.status(400).send({ resultados: false });
+  } finally {
+    res.end();
+  }
+});
+
 /////////////////////////////////////// HISTORIAL DESPLAZAMIENTOS ///////////////////////////////////////////////////////////
 
 app.get("/HISTORIAL-DESPLAZAMIENTOS", async (req, res) => {
@@ -417,5 +551,10 @@ app.get("/HISTORIAL-DESPLAZAMIENTOS", async (req, res) => {
     datosUbicaciones.push(ubicacion.data());
   }
 
-  res.end(datosUbicaciones);
+  res.send(datosUbicaciones);
+  res.end();
 });
+
+/////////////////////////////////////// MANEJO AISLAMIENTO ///////////////////////////////////////////////////////////
+
+/////////////////////////////////////// MOVIMIENTO EN AISLAMIENTO //////////////////////////////////////////////////////
