@@ -32,7 +32,13 @@ async function cargarZonas() {
       snap.forEach(zona => {
         const obj = {
           I: zona.id,
-          Z: zona.data()
+          LatMa: zona.data().LatMa,
+          LatMi: zona.data().LatMi,
+          LonMa: zona.data().LonMa,
+          LonMi: zona.data().LonMi,
+          Lat: zona.data().Lat,
+          Lon: zona.data().Lon,
+          N: zona.data().N
         };
         zonas.push(obj);
       });
@@ -66,7 +72,22 @@ app.post("/INGRESO", async (req, res) => {
       .then(snap => {
         if (snap.exists) {
           if (snap.data().C == req.body.C) {
-            res.status(200).send({ I: 1 });
+            if (req.body.T == "U_NATURALES") {
+              const datos = {
+                I: 1,
+                N: snap.data().N,
+                D: snap.data().D,
+                E: snap.data().E,
+                ID: snap.data().I,
+                M: snap.data().M,
+                F: snap.data().F,
+                X: snap.data().X,
+                Z: snap.data().Z
+              };
+              res.status(200).send(datos);
+            } else {
+              res.status(200).send({ I: 1 });
+            }
           } else {
             res.status(200).send({ I: 0 });
           }
@@ -87,6 +108,7 @@ app.post("/REGISTRO", async (req, res) => {
   /*
   {
   "usuario": "";
+  "correo":"":
   "nombre" : "";
   "apellido" : "";
   "contraseña" : "";
@@ -95,62 +117,72 @@ app.post("/REGISTRO", async (req, res) => {
   "ID": "";
   "direccion": "";
   "localidad": "";
-  }
+    }
   */
 
   let llave = req.body.usuario;
-  var validarLlave = await db
+  let rI = req.body.tipoID + " " + req.body.ID;
+  let correo = req.body.correo;
+
+  var validarLlaveBoolean = await db
     .collection("U_NATURALES")
     .doc(llave)
     .get();
-  if (validarLlave.exists) {
-    res.end("Lo sentimos, este usuario ya existe");
+
+  if (validarLlaveBoolean.exists) {
+    res.send({ M: "Lo sentimos, este usuario ya existe" });
   } else {
-    //resumir en cliente
-    let rI = req.body.tipoID + " " + req.body.ID;
     var validarCedula = await db
       .collection("U_NATURALES")
       .where("I", "==", rI)
+      .limit(1)
       .get();
 
-    if (validarCedula.exists) {
-      res.end("Esta cedula ya está inscrita");
+    if (!validarCedula.empty) {
+      res.send({ M: "Esta cedula ya está inscrita" });
     } else {
-      //resumir en cliente
-      let rN = req.body.nombre + " " + req.body.apellido;
-      let rC = req.body.contraseña;
-      let rM = req.body.correo;
-      let rE = "000000";
-      let rX = "-";
-      let rF = req.body.fechaNacimiento;
-      let rD = req.body.direccion;
-      let rZ = req.body.localidad;
-      var data = {
-        N: rN,
-        C: rC,
-        M: rM,
-        I: rI,
-        E: rE,
-        X: rX,
-        F: rF,
-        D: rD,
-        Z: rZ
-      };
-      //console.log(llave, data);
-      await db
+      var validarCorreo = await db
         .collection("U_NATURALES")
-        .doc(llave)
-        .set(data);
+        .where("M", "==", correo)
+        .limit(1)
+        .get();
 
-      //Agregar el usuario a las Relaciones y añadir el arreglo de Ubicaciones
-      await db
-        .collection("RELACIONES")
-        .doc(llave)
-        .set({ U: [] });
+      if (!validarCorreo.empty) {
+        res.send({ M: "Este correo ya está inscrito" });
+      } else {
+        let rN = req.body.nombre + " " + req.body.apellido;
+        let rC = req.body.contraseña;
+        let rM = req.body.correo;
+        let rE = "000000";
+        let rX = "-";
+        let rF = req.body.fechaNacimiento;
+        let rD = req.body.direccion;
+        let rZ = req.body.localidad;
+        var data = {
+          N: rN,
+          C: rC,
+          M: rM,
+          I: rI,
+          E: rE,
+          X: rX,
+          F: rF,
+          D: rD,
+          Z: rZ
+        };
+        await db
+          .collection("U_NATURALES")
+          .doc(llave)
+          .set(data);
+        await db
+          .collection("RELACIONES")
+          .doc(llave)
+          .set({ U: [] });
 
-      res.send("Usuario añadido!");
+        res.send({ M: "Usuario añadido!" });
+      }
     }
   }
+  res.end();
 });
 
 ///////////////////////////////////////////////// CAMBIO CONTRASEÑA /////////////////////////////////////////////////////////
@@ -174,10 +206,10 @@ app.post("/REPORTE-UBICACION", async (req, res) => {
   try {
     while (!tieneZona || i < zonas.length) {
       if (
-        req.body.Lat >= zonas[i].Z.LatMi &&
-        req.body.Lat <= zonas[i].Z.LatMa &&
-        req.body.Lon >= zonas[i].Z.LonMi &&
-        req.body.Lon <= zonas[i].Z.LonMa
+        req.body.Lat >= zonas[i].LatMi &&
+        req.body.Lat <= zonas[i].LatMa &&
+        req.body.Lon >= zonas[i].LonMi &&
+        req.body.Lon <= zonas[i].LonMa
       ) {
         tieneZona = true;
         idZona = zonas[i].I;
@@ -277,7 +309,7 @@ app.post("/SOLICITAR-USUARIOS-NOTIFICAR-CITA", async (req, res) => {
   "F" :"" (fecha)
 }  envia correos*/
 app.post("/ENVIAR-CORREO-USUARIOS-NOTIFICAR-CITA", async (req, res) => {
-  console.log("Entra")
+  console.log("Entra");
   try {
     let listaUsuarios = [];
     await db
@@ -350,9 +382,9 @@ app.post("/ENVIAR-CORREO-USUARIO", async (req, res) => {
       .collection("U_NATURALES")
       .doc(datos.U)
       .update({ X: "S" });
-    res.status(200).send({ correoEnviado: true });
+    res.status(200).send({ E: 1 });
   } catch (error) {
-    res.status(400).send({ correoEnviado: false });
+    res.status(400).send({ E: 0 });
   } finally {
     res.end();
   }
@@ -360,7 +392,7 @@ app.post("/ENVIAR-CORREO-USUARIO", async (req, res) => {
 
 /////////////////////////////////////// NOTIFICACIÓN DE CONTACTO CON USUARIO(+) COVID ///////////////////////////////////////
 
-app.get("/RESULTADO-EXAMEN", async (req, res) => {
+app.post("/RESULTADO-EXAMEN", async (req, res) => {
   /*
   {
   "ID" : "";
@@ -413,15 +445,15 @@ app.get("/RESULTADO-EXAMEN", async (req, res) => {
 
       var ubicacionCoincidente = await db
         .collection("UBICACIONES")
-        .where("Lat", ">=", Lat - 0.00001)
-        .where("Lat", "<=", Lat + 0.00001)
+        .where("Lat", ">=", Lat - 0.00004504504)
+        .where("Lat", "<=", Lat + 0.00004504504)
         .get();
 
       ubicacionCoincidente.docs.forEach(ub => {
         var llave = ub.id;
         ub = ub.data();
 
-        if (Lon - 0.00001 <= ub.Lon && ub.Lon <= Lon + 0.00001) {
+        if (Lon - 0.00004504504 <= ub.Lon && ub.Lon <= Lon + 0.00004504504) {
           if (!relacionUbicaciones.includes(llave)) {
             if (HI <= ub.HI && ub.HI <= HF) {
               if (ub.F == F) {
@@ -462,16 +494,13 @@ app.get("/RESULTADO-EXAMEN", async (req, res) => {
 /*A (Activo) - I (Inactivo) - S(Solicitado) - P(Pendiente) -N (Examen no Tomado)*/
 /*Estructura { Z : "" (id Zona)}*/
 
-app.get("/REPORTE-ZONA", async (req, res) => {
+app.post("/REPORTE-ZONA", async (req, res) => {
   try {
     let activos = 0,
       inactivos = 0,
       solicitados = 0,
       pendientes = 0,
-      examenNoTomado = 0,
-      total = 0,
-      porcentajeActivos = 0;
-    let correoUsuarios = [];
+      examenNoTomado = 0;
 
     await db
       .collection("U_NATURALES")
@@ -491,21 +520,15 @@ app.get("/REPORTE-ZONA", async (req, res) => {
           } else if (estado == "N") {
             examenNoTomado += 1;
           }
-          correoUsuarios.push(doc.data().M);
         });
       });
-    total = activos + inactivos + solicitados + pendientes + examenNoTomado;
-    porcentajeActivos = (activos / total) * 100;
-
-    console.log(zonas.find(zona => zona.I == req.body.Z).Z.N);
 
     const resultados = {
       A: activos,
       I: inactivos,
       S: solicitados,
       P: pendientes,
-      N: examenNoTomado,
-      PA: porcentajeActivos
+      N: examenNoTomado
     };
     res.status(200).send(resultados);
   } catch (error) {
@@ -521,16 +544,37 @@ app.get("/REPORTE-ZONA", async (req, res) => {
  "C" : (Activo "A" o Inactivo (I))
 }*/
 app.post("/REPORTAR-CUARENTENA-ZONA", async (req, res) => {
+  let estadoLocalidad, mensaje = req.body.C;
+
   await db
     .collection("ZONA")
     .doc(req.body.Z)
-    .update({ C: req.body.C });
+    .get()
+    .then(snap => {
+      estadoLocalidad = snap.data().C;
+    });
 
-  const nombreZona = zonas.find(zona => zona.I == req.body.Z).Z.N;
-  const asunto =
+  if (estadoLocalidad != mensaje) {
+    await db
+      .collection("ZONA")
+      .doc(req.body.Z)
+      .update({ C: req.body.C });
+  }else{
+    mensaje = "C";
+  }
+
+  const nombreZona = zonas.find(zona => zona.I == req.body.Z).N;
+  let asunto;
+  
+  if(mensaje == "C"){
+    asunto = "SeCoCo - Continua Aislamiento de Zona";
+  }else{
+    asunto =
     req.body.C == "A"
       ? "SeCoCo - Aislamiento de Zona"
       : "SeCoCo - Levantamiento de Aislamiento de Zona";
+  }
+  
   await db
     .collection("U_NATURALES")
     .where("Z", "==", req.body.Z)
@@ -546,13 +590,32 @@ app.post("/REPORTAR-CUARENTENA-ZONA", async (req, res) => {
     });
 });
 
-app.get("/ZONAS", async (req, res) => {});
+app.get("/ZONAS", async (req, res) => {
+  try {
+    let coorZonas = [];
+
+    for (var i = 0; i < zonas.length; i++) {
+      const zona = {
+        I: zonas[i].I,
+        N: zonas[i].N,
+        Lat: zonas[i].Lat,
+        Lon: zonas[i].Lon
+      };
+      coorZonas.push(zona);
+    }
+    res.status(200).send({ coorZonas });
+  } catch (error) {
+    res.status(200).send({ zonas: false });
+  } finally {
+    res.end();
+  }
+});
 
 /////////////////////////////////////// HISTORIAL DESPLAZAMIENTOS ///////////////////////////////////////////////////////////
 
-app.get("/HISTORIAL-DESPLAZAMIENTOS", async (req, res) => {
+app.post("/HISTORIAL-DESPLAZAMIENTOS", async (req, res) => {
   const llaveUsuario = req.body.usuario;
-
+  console.log(llaveUsuario);
   var relacionUbicaciones = await db
     .collection("RELACIONES")
     .doc(llaveUsuario)
@@ -567,21 +630,26 @@ app.get("/HISTORIAL-DESPLAZAMIENTOS", async (req, res) => {
       .get();
     datosUbicaciones.push(ubicacion.data());
   }
+  res.send({ datosUbicaciones });
 
-  res.send(datosUbicaciones);
   res.end();
 });
 
 /////////////////////////////////////// MANEJO AISLAMIENTO ///////////////////////////////////////////////////////////
 
 app.post("/MANEJO-AISLAMIENTO", async (req, res) => {
-  const llaveUsuario = req.body.usuario;
+  const localidad = req.body.Z;
 
-  var localidad = await db
-    .collection("U_NATURALES")
-    .doc(llaveUsuario)
-    .get();
-  localidad = localidad.data().Z;
+  var latMin, latMax, lonMin, lonMax;
+
+  for (var i = 0; i < zonas.lenght; i++) {
+    if (zonas[i].Z == localidad) {
+      latMin = zonas[i].LatMi;
+      latMax = zonas[i].LatMa;
+      latMax = zonas[i].LonMi;
+      lonMax = zonas[i].LonMa;
+    }
+  }
 
   var usuariosLocalidad = await db
     .collection("U_NATURALES")
@@ -604,7 +672,11 @@ app.post("/MANEJO-AISLAMIENTO", async (req, res) => {
   res.send({
     Total: total,
     Activos: activos / total,
-    Posibles: posibles / total
+    Posibles: posibles / total,
+    LatMin: latMin,
+    LonMin: lonMin,
+    LatMax: latMax,
+    LonMax: lonMax
   });
   res.end();
 });
