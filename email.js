@@ -40,6 +40,8 @@ module.exports = class email {
       mailOptions.text =`Estimado Ciudadano\n\nTeniendo en cuenta que en la localidad donde reside (${informacion.ZN}) tiene ${informacion.PA}% de infectados con COVID-19. El distrito de Bogotá D.C ha dispuesto levantar la cuarentena de la localidad.\n\nGracias por su atención.`
     }else if(asunto  == "SeCoCo - Continua Aislamiento de Zona"){
       mailOptions.text =`Estimado Ciudadano\n\nTeniendo en cuenta que en la localidad donde reside (${informacion.ZN}) tiene ${informacion.PA}% de infectados con COVID-19. El distrito de Bogotá D.C ha dispuesto continuar con la cuarentena de la localidad.\n\nGracias por su atención.`
+    }else if(asunto  == "SeCoCo - Continua Sin Aislamiento la Zona"){
+      mailOptions.text =`Estimado Ciudadano\n\nTeniendo en cuenta que en la localidad donde reside (${informacion.ZN}) tiene ${informacion.PA}% de infectados con COVID-19. El distrito de Bogotá D.C ha dispuesto continuar sin la cuarentena en la localidad.\n\nGracias por su atención.`
     }else {
       mailOptions.text =
         "Revisa tus sintomas, tuviste contacto en los ultimos dias con una persona con COVID";

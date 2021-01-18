@@ -187,6 +187,34 @@ app.post("/REGISTRO", async (req, res) => {
 
 ///////////////////////////////////////////////// CAMBIO CONTRASEÑA /////////////////////////////////////////////////////////
 
+/*Estructura {
+  "U": "" (Usuario),
+  "C": "" (Contraseña)
+}*/
+
+app.post("/CAMBIAR-CONTRASENA", async (req, res) => {
+  try {
+    const usuario = await db
+      .collection("U_NATURALES")
+      .doc(req.body.U)
+      .get();
+
+    if (usuario.exists) {
+      await db
+        .collection("U_NATURALES")
+        .doc(req.body.U)
+        .update({ C: req.body.C });
+      res.status(200).send({ A: 1 });
+    } else {
+      res.status(200).send({ A: 2 });
+    }
+  } catch (error) {
+    res.status(200).send({ A: 3 });
+  } finally {
+    res.end();
+  }
+});
+
 //////////////////////////////////////////////// REPORTE UBICACIÓN /////////////////////////////////////////////////////////
 /*
 {   "U": "",
@@ -265,6 +293,7 @@ app.put("/ACTUALIZAR-SINTOMAS", async (req, res) => {
     .collection("U_NATURALES")
     .doc(llave)
     .update({ E: estado });
+  res.end();
 });
 
 ///////////////////////////////////////////////// NOTIFICAR CITA ////////////////////////////////////////////////////////////
@@ -309,7 +338,6 @@ app.post("/SOLICITAR-USUARIOS-NOTIFICAR-CITA", async (req, res) => {
   "F" :"" (fecha)
 }  envia correos*/
 app.post("/ENVIAR-CORREO-USUARIOS-NOTIFICAR-CITA", async (req, res) => {
-  console.log("Entra");
   try {
     let listaUsuarios = [];
     await db
@@ -544,50 +572,60 @@ app.post("/REPORTE-ZONA", async (req, res) => {
  "C" : (Activo "A" o Inactivo (I))
 }*/
 app.post("/REPORTAR-CUARENTENA-ZONA", async (req, res) => {
-  let estadoLocalidad, mensaje = req.body.C;
+  try {
+    let estadoLocalidad,
+      mensaje = req.body.C;
+    const nombreZona = zonas.find(zona => zona.I == req.body.Z).N;
+    const informacion = {
+      PA: req.body.PA * 100,
+      ZN: nombreZona
+    };
+    let asunto;
 
-  await db
-    .collection("ZONA")
-    .doc(req.body.Z)
-    .get()
-    .then(snap => {
-      estadoLocalidad = snap.data().C;
-    });
-
-  if (estadoLocalidad != mensaje) {
     await db
       .collection("ZONA")
       .doc(req.body.Z)
-      .update({ C: req.body.C });
-  }else{
-    mensaje = "C";
-  }
-
-  const nombreZona = zonas.find(zona => zona.I == req.body.Z).N;
-  let asunto;
-  
-  if(mensaje == "C"){
-    asunto = "SeCoCo - Continua Aislamiento de Zona";
-  }else{
-    asunto =
-    req.body.C == "A"
-      ? "SeCoCo - Aislamiento de Zona"
-      : "SeCoCo - Levantamiento de Aislamiento de Zona";
-  }
-  
-  await db
-    .collection("U_NATURALES")
-    .where("Z", "==", req.body.Z)
-    .get()
-    .then(snap => {
-      snap.forEach(doc => {
-        const informacion = {
-          PA: req.body.PA,
-          ZN: nombreZona
-        };
-        email.enviarCorreo(doc.data().M, asunto, informacion);
+      .get()
+      .then(snap => {
+        estadoLocalidad = snap.data().C;
       });
-    });
+
+    if (estadoLocalidad != mensaje) {
+      await db
+        .collection("ZONA")
+        .doc(req.body.Z)
+        .update({ C: req.body.C });
+    } else {
+      mensaje = "C";
+    }
+
+    if (mensaje == "C") {
+      asunto =
+        req.body.PA > 0.5
+          ? "SeCoCo - Continua Aislamiento de Zona"
+          : "SeCoCo - Continua Sin Aislamiento la Zona";
+    } else {
+      asunto =
+        req.body.C == "A"
+          ? "SeCoCo - Aislamiento de Zona"
+          : "SeCoCo - Levantamiento de Aislamiento de Zona";
+    }
+
+    await db
+      .collection("U_NATURALES")
+      .where("Z", "==", req.body.Z)
+      .get()
+      .then(snap => {
+        snap.forEach(doc => {
+          email.enviarCorreo(doc.data().M, asunto, informacion);
+        });
+      });
+    res.status(200).send({ E: 1 });
+  } catch (error) {
+    res.status(200).send({ E: 0 });
+  } finally {
+    res.end();
+  }
 });
 
 app.get("/ZONAS", async (req, res) => {
@@ -615,7 +653,7 @@ app.get("/ZONAS", async (req, res) => {
 
 app.post("/HISTORIAL-DESPLAZAMIENTOS", async (req, res) => {
   const llaveUsuario = req.body.usuario;
-  console.log(llaveUsuario);
+  
   var relacionUbicaciones = await db
     .collection("RELACIONES")
     .doc(llaveUsuario)
@@ -639,14 +677,18 @@ app.post("/HISTORIAL-DESPLAZAMIENTOS", async (req, res) => {
 
 app.post("/MANEJO-AISLAMIENTO", async (req, res) => {
   const localidad = req.body.Z;
+  
 
   var latMin, latMax, lonMin, lonMax;
-
-  for (var i = 0; i < zonas.lenght; i++) {
-    if (zonas[i].Z == localidad) {
+  //console.log("--------P-----------");
+  //console.log(zonas);
+  //console.log("********S************");
+  for (var i = 0; i < zonas.length; i++) {
+    //console.log(localidad+ ":",zonas[i].I, zonas[i].LatMi, zonas[i].LatMa, zonas[i].LonMi,zonas[i].LonMa);
+    if (zonas[i].I == localidad) {
       latMin = zonas[i].LatMi;
       latMax = zonas[i].LatMa;
-      latMax = zonas[i].LonMi;
+      lonMin = zonas[i].LonMi;
       lonMax = zonas[i].LonMa;
     }
   }
@@ -669,10 +711,14 @@ app.post("/MANEJO-AISLAMIENTO", async (req, res) => {
     }
   });
 
+  var rta = Number(activos) / Number(total);
+  posibles = posibles / total;
+  
+  //console.log(total, rta, posibles, latMin, lonMin, latMax, lonMax);
+  
   res.send({
-    Total: total,
-    Activos: activos / total,
-    Posibles: posibles / total,
+    Activos: rta,
+    Posibles: posibles,
     LatMin: latMin,
     LonMin: lonMin,
     LatMax: latMax,
