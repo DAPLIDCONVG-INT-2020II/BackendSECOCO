@@ -38,7 +38,8 @@ async function cargarZonas() {
           LonMi: zona.data().LonMi,
           Lat: zona.data().Lat,
           Lon: zona.data().Lon,
-          N: zona.data().N
+          N: zona.data().N,
+          C: zona.data().C
         };
         zonas.push(obj);
       });
@@ -296,6 +297,7 @@ app.put("/ACTUALIZAR-SINTOMAS", async (req, res) => {
   res.end();
 });
 
+
 ///////////////////////////////////////////////// NOTIFICAR CITA ////////////////////////////////////////////////////////////
 
 /*Estructura { 
@@ -440,12 +442,16 @@ app.post("/RESULTADO-EXAMEN", async (req, res) => {
     .get();
 
   const llaveUsuario = usuarioPositivo.docs[0].id;
+  const emailUsuarioCorreo = usuarioPositivo.docs[0].data().M;
+  
+  email.enviarCorreo(emailUsuarioCorreo, "SeCoCo - Actualización de resultado de examen", resultado);
+  
   await db
     .collection("U_NATURALES")
     .doc(llaveUsuario)
     .update({ X: resultado });
 
-  if (resultado == "P") {
+  if (resultado == "A") {
     info = ", se ha le ha informado a los demas usuarios el posible contacto";
 
     var relacionUbicaciones = await db
@@ -514,7 +520,8 @@ app.post("/RESULTADO-EXAMEN", async (req, res) => {
       email.enviarCorreo(correo, "SeCoCo - Revisa tus sintomas", null);
     }
   }
-  res.end("Dato actualizado" + info);
+  res.send({X: "Dato actualizado" + info });
+  res.end();
 });
 
 /////////////////////////////////////////////// REPORTE ZONA ////////////////////////////////////////////////////////////////
@@ -637,13 +644,14 @@ app.get("/ZONAS", async (req, res) => {
         I: zonas[i].I,
         N: zonas[i].N,
         Lat: zonas[i].Lat,
-        Lon: zonas[i].Lon
+        Lon: zonas[i].Lon,
+        C: zonas[i].C
       };
       coorZonas.push(zona);
     }
     res.status(200).send({ coorZonas });
   } catch (error) {
-    res.status(200).send({ zonas: false });
+    res.status(200).send({ coorZonas: false });
   } finally {
     res.end();
   }
@@ -653,7 +661,7 @@ app.get("/ZONAS", async (req, res) => {
 
 app.post("/HISTORIAL-DESPLAZAMIENTOS", async (req, res) => {
   const llaveUsuario = req.body.usuario;
-  
+
   var relacionUbicaciones = await db
     .collection("RELACIONES")
     .doc(llaveUsuario)
@@ -677,7 +685,6 @@ app.post("/HISTORIAL-DESPLAZAMIENTOS", async (req, res) => {
 
 app.post("/MANEJO-AISLAMIENTO", async (req, res) => {
   const localidad = req.body.Z;
-  
 
   var latMin, latMax, lonMin, lonMax;
   //console.log("--------P-----------");
@@ -713,9 +720,9 @@ app.post("/MANEJO-AISLAMIENTO", async (req, res) => {
 
   var rta = Number(activos) / Number(total);
   posibles = posibles / total;
-  
+
   //console.log(total, rta, posibles, latMin, lonMin, latMax, lonMax);
-  
+
   res.send({
     Activos: rta,
     Posibles: posibles,
@@ -761,6 +768,7 @@ app.post("/MOVIMIENTO-EN-AISLAMIENTO", async (req, res) => {
       .collection("RELACIONES")
       .doc(nombres[n])
       .get();
+    
     relacionUbicaciones = relacionUbicaciones.data().U;
     for (var u = 0; u < relacionUbicaciones.length; u++) {
       var ubicacion = await db
@@ -768,10 +776,9 @@ app.post("/MOVIMIENTO-EN-AISLAMIENTO", async (req, res) => {
         .doc(relacionUbicaciones[u])
         .get();
 
-      if (
-        ubicacion.data().Z != Z
+      if (ubicacion.data().Z != Z
         // &&!usuariosFueraDeLocalidad.includes(nombres[n])
-      ) {
+    ) {
         //usuariosFueraDeLocalidad.push(nombres[n]);
         info.usuario = nombres[n];
         info.nombre = datos[n].N;
@@ -782,8 +789,8 @@ app.post("/MOVIMIENTO-EN-AISLAMIENTO", async (req, res) => {
       }
     }
   }
-
   /*--------------------- Que enviamos? el correo, la cedula, el usuario?--------------------*/
-  res.send(respuesta);
+  
+  res.send({Z: respuesta});
   res.end();
 });
