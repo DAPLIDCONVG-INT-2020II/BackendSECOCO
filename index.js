@@ -297,7 +297,6 @@ app.put("/ACTUALIZAR-SINTOMAS", async (req, res) => {
   res.end();
 });
 
-
 ///////////////////////////////////////////////// NOTIFICAR CITA ////////////////////////////////////////////////////////////
 
 /*Estructura { 
@@ -422,6 +421,7 @@ app.post("/ENVIAR-CORREO-USUARIO", async (req, res) => {
 
 /////////////////////////////////////// NOTIFICACIÓN DE CONTACTO CON USUARIO(+) COVID ///////////////////////////////////////
 
+//ERROR
 app.post("/RESULTADO-EXAMEN", async (req, res) => {
   /*
   {
@@ -443,9 +443,13 @@ app.post("/RESULTADO-EXAMEN", async (req, res) => {
 
   const llaveUsuario = usuarioPositivo.docs[0].id;
   const emailUsuarioCorreo = usuarioPositivo.docs[0].data().M;
-  
-  email.enviarCorreo(emailUsuarioCorreo, "SeCoCo - Actualización de resultado de examen", resultado);
-  
+
+  email.enviarCorreo(
+    emailUsuarioCorreo,
+    "SeCoCo - Actualización de resultado de examen",
+    resultado
+  );
+
   await db
     .collection("U_NATURALES")
     .doc(llaveUsuario)
@@ -520,7 +524,7 @@ app.post("/RESULTADO-EXAMEN", async (req, res) => {
       email.enviarCorreo(correo, "SeCoCo - Revisa tus sintomas", null);
     }
   }
-  res.send({X: "Dato actualizado" + info });
+  res.send({ X: "Dato actualizado" + info });
   res.end();
 });
 
@@ -578,6 +582,8 @@ app.post("/REPORTE-ZONA", async (req, res) => {
  "Z" : (idZona)
  "C" : (Activo "A" o Inactivo (I))
 }*/
+
+//Tengo que revisar
 app.post("/REPORTAR-CUARENTENA-ZONA", async (req, res) => {
   try {
     let estadoLocalidad,
@@ -602,6 +608,8 @@ app.post("/REPORTAR-CUARENTENA-ZONA", async (req, res) => {
         .collection("ZONA")
         .doc(req.body.Z)
         .update({ C: req.body.C });
+      const index = zonas.findIndex(zona => zona.I == req.body.Z);
+      zonas[index].C = req.body.C;
     } else {
       mensaje = "C";
     }
@@ -617,6 +625,8 @@ app.post("/REPORTAR-CUARENTENA-ZONA", async (req, res) => {
           ? "SeCoCo - Aislamiento de Zona"
           : "SeCoCo - Levantamiento de Aislamiento de Zona";
     }
+
+    console.log(asunto);
 
     await db
       .collection("U_NATURALES")
@@ -768,7 +778,7 @@ app.post("/MOVIMIENTO-EN-AISLAMIENTO", async (req, res) => {
       .collection("RELACIONES")
       .doc(nombres[n])
       .get();
-    
+
     relacionUbicaciones = relacionUbicaciones.data().U;
     for (var u = 0; u < relacionUbicaciones.length; u++) {
       var ubicacion = await db
@@ -776,9 +786,10 @@ app.post("/MOVIMIENTO-EN-AISLAMIENTO", async (req, res) => {
         .doc(relacionUbicaciones[u])
         .get();
 
-      if (ubicacion.data().Z != Z
+      if (
+        ubicacion.data().Z != Z
         // &&!usuariosFueraDeLocalidad.includes(nombres[n])
-    ) {
+      ) {
         //usuariosFueraDeLocalidad.push(nombres[n]);
         info.usuario = nombres[n];
         info.nombre = datos[n].N;
@@ -790,7 +801,7 @@ app.post("/MOVIMIENTO-EN-AISLAMIENTO", async (req, res) => {
     }
   }
   /*--------------------- Que enviamos? el correo, la cedula, el usuario?--------------------*/
-  
-  res.send({Z: respuesta});
+
+  res.send({ Z: respuesta });
   res.end();
 });
