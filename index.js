@@ -3,6 +3,8 @@ const express = require("express");
 const admin = require("firebase-admin");
 var email = require("./email.js");
 var email = new email();
+const fetch = require("node-fetch");
+const inside = require("point-in-polygon");
 
 let serviceAccount = require("./cuentaServicio/backend-301221-c62c974d78b8.json");
 
@@ -25,38 +27,26 @@ app.use(express.static("public"));
 var zonas = [];
 cargarZonas();
 async function cargarZonas() {
-  await db
-    .collection("ZONA")
-    .get()
-    .then(snap => {
-      snap.forEach(zona => {
-        const obj = {
-          I: zona.id,
-          LatMa: zona.data().LatMa,
-          LatMi: zona.data().LatMi,
-          LonMa: zona.data().LonMa,
-          LonMi: zona.data().LonMi,
-          Lat: zona.data().Lat,
-          Lon: zona.data().Lon,
-          N: zona.data().N,
-          C: zona.data().C
-        };
-        zonas.push(obj);
+  try {
+    await db
+      .collection("ZONA")
+      .get()
+      .then(snap => {
+        snap.forEach(zona => {
+          const obj = {
+            I: zona.id,
+            Lat: zona.data().Lat,
+            Lon: zona.data().Lon,
+            N: zona.data().N,
+            C: zona.data().C
+          };
+          zonas.push(obj);
+        });
       });
-    });
+  } catch (error) {
+    console.err("Las localidades no pueden ser cargadas");
+  }
 }
-
-/*-------------------------------------------------- PLANTILLA GENERAL ------------------------------------------------------*/
-/*app.get("/:id", async (req, res) => {
-  console.log(req.params.id);
-  
-  let usuarioPositivo = await db.collection('USUARIOS').where("C","==", "0" ).limit(1).get();
-  const llaveUsuario= usuarioPositivo.docs[0].id;
-    for (const doc of usuario.docs) {
-        console.log(doc.id, '=>', doc.data());
-    }
-  res.send("Recibido");
-});*/
 
 ///////////////////////////////////////////////////////// INGRESO //////////////////////////////////////////////////////////
 
@@ -103,7 +93,7 @@ app.post("/INGRESO", async (req, res) => {
   }
 });
 
-///////////////////////////////////////////////////////// REGISTRO /////////////////////////////////////////////////////////
+/******************************************** REGISTRO *******************************************************/
 
 app.post("/REGISTRO", async (req, res) => {
   /*
@@ -121,69 +111,70 @@ app.post("/REGISTRO", async (req, res) => {
     }
   */
 
-  let llave = req.body.usuario;
-  let rI = req.body.tipoID + " " + req.body.ID;
-  let correo = req.body.correo;
-
-  var validarLlaveBoolean = await db
-    .collection("U_NATURALES")
-    .doc(llave)
-    .get();
-
-  if (validarLlaveBoolean.exists) {
-    res.send({ M: "Lo sentimos, este usuario ya existe" });
-  } else {
-    var validarCedula = await db
+  try {
+    let llave = req.body.usuario;
+    let rI = req.body.tipoID + " " + req.body.ID;
+    let correo = req.body.correo;
+    var validarLlaveBoolean = await db
       .collection("U_NATURALES")
-      .where("I", "==", rI)
-      .limit(1)
+      .doc(llave)
       .get();
-
-    if (!validarCedula.empty) {
-      res.send({ M: "Esta cedula ya está inscrita" });
+    if (validarLlaveBoolean.exists) {
+      res.send({ M: "Lo sentimos, este usuario ya existe" });
     } else {
-      var validarCorreo = await db
+      var validarCedula = await db
         .collection("U_NATURALES")
-        .where("M", "==", correo)
+        .where("I", "==", rI)
         .limit(1)
         .get();
-
-      if (!validarCorreo.empty) {
-        res.send({ M: "Este correo ya está inscrito" });
+      if (!validarCedula.empty) {
+        res.send({ M: "Esta cedula ya está inscrita" });
       } else {
-        let rN = req.body.nombre + " " + req.body.apellido;
-        let rC = req.body.contraseña;
-        let rM = req.body.correo;
-        let rE = "000000";
-        let rX = "-";
-        let rF = req.body.fechaNacimiento;
-        let rD = req.body.direccion;
-        let rZ = req.body.localidad;
-        var data = {
-          N: rN,
-          C: rC,
-          M: rM,
-          I: rI,
-          E: rE,
-          X: rX,
-          F: rF,
-          D: rD,
-          Z: rZ
-        };
-        await db
+        var validarCorreo = await db
           .collection("U_NATURALES")
-          .doc(llave)
-          .set(data);
-        await db
-          .collection("RELACIONES")
-          .doc(llave)
-          .set({ U: [] });
+          .where("M", "==", correo)
+          .limit(1)
+          .get();
 
-        res.send({ M: "Usuario añadido!" });
+        if (!validarCorreo.empty) {
+          res.send({ M: "Este correo ya está inscrito" });
+        } else {
+          let rN = req.body.nombre + " " + req.body.apellido;
+          let rC = req.body.contraseña;
+          let rM = req.body.correo;
+          let rE = "000000";
+          let rX = "-";
+          let rF = req.body.fechaNacimiento;
+          let rD = req.body.direccion;
+          let rZ = req.body.localidad;
+          var data = {
+            N: rN,
+            C: rC,
+            M: rM,
+            I: rI,
+            E: rE,
+            X: rX,
+            F: rF,
+            D: rD,
+            Z: rZ
+          };
+          await db
+            .collection("U_NATURALES")
+            .doc(llave)
+            .set(data);
+          await db
+            .collection("RELACIONES")
+            .doc(llave)
+            .set({ U: [] });
+          res.status(200).send({ M: "Usuario añadido!" });
+        }
       }
     }
+  } catch (error) {
+    res.status(400).send({ error });
+  } finally {
+    res.end();
   }
-  res.end();
 });
 
 ///////////////////////////////////////////////// CAMBIO CONTRASEÑA /////////////////////////////////////////////////////////
@@ -226,26 +217,13 @@ app.post("/CAMBIAR-CONTRASENA", async (req, res) => {
     "Lon": 
     }
 */
+
 app.post("/REPORTE-UBICACION", async (req, res) => {
   const rutas = ["UBICACIONES", "RELACIONES", "ZONA"];
   let indexUbicacion = 0;
-  let i = 0;
-  let idZona = 0;
-  let tieneZona = false;
+  var idZona;
   try {
-    while (!tieneZona || i < zonas.length) {
-      if (
-        req.body.Lat >= zonas[i].LatMi &&
-        req.body.Lat <= zonas[i].LatMa &&
-        req.body.Lon >= zonas[i].LonMi &&
-        req.body.Lon <= zonas[i].LonMa
-      ) {
-        tieneZona = true;
-        idZona = zonas[i].I;
-      }
-      i++;
-    }
-
+    idZona = await identificarLocalidad(req.body.Lon, req.body.Lat);
     await db
       .collection(rutas[0])
       .doc("C")
@@ -285,16 +263,21 @@ app.post("/REPORTE-UBICACION", async (req, res) => {
   }
 });
 
-///////////////////////////////////////////////// ACTUALIZAR ESTADO DE SINTOMAS ////////////////////////////////////////////////////////////
+/***************************************** ACTUALIZAR ESTADO DE SINTOMAS *****************************************/
 
 app.put("/ACTUALIZAR-SINTOMAS", async (req, res) => {
-  let llave = req.body.usuario;
-  let estado = req.body.estado;
-  await db
-    .collection("U_NATURALES")
-    .doc(llave)
-    .update({ E: estado });
-  res.end();
+  try {
+    let llave = req.body.usuario;
+    let estado = req.body.estado;
+    await db
+      .collection("U_NATURALES")
+      .doc(llave)
+      .update({ E: estado });
+  } catch (error) {
+    res.status(400).send({ error });
+  } finally {
+    res.end();
+  }
 });
 
 ///////////////////////////////////////////////// NOTIFICAR CITA ////////////////////////////////////////////////////////////
@@ -419,9 +402,8 @@ app.post("/ENVIAR-CORREO-USUARIO", async (req, res) => {
   }
 });
 
-/////////////////////////////////////// NOTIFICACIÓN DE CONTACTO CON USUARIO(+) COVID ///////////////////////////////////////
+/************************** NOTIFICACIÓN DE CONTACTO CON USUARIO(+) COVID *****************************/
 
-//ERROR
 app.post("/RESULTADO-EXAMEN", async (req, res) => {
   /*
   {
@@ -430,102 +412,107 @@ app.post("/RESULTADO-EXAMEN", async (req, res) => {
   "resultado" : "";
   }
   */
-  let ID = req.body.ID;
-  let tipoID = req.body.tipoID;
-  let resultado = req.body.resultado;
-  let info = "";
 
-  var usuarioPositivo = await db
-    .collection("U_NATURALES")
-    .where("I", "==", tipoID + " " + ID)
-    .limit(1)
-    .get();
+  try {
+    let ID = req.body.ID;
+    let tipoID = req.body.tipoID;
+    let resultado = req.body.resultado;
+    let info = "";
+    console.log("request");
 
-  const llaveUsuario = usuarioPositivo.docs[0].id;
-  const emailUsuarioCorreo = usuarioPositivo.docs[0].data().M;
-
-  email.enviarCorreo(
-    emailUsuarioCorreo,
-    "SeCoCo - Actualización de resultado de examen",
-    resultado
-  );
-
-  await db
-    .collection("U_NATURALES")
-    .doc(llaveUsuario)
-    .update({ X: resultado });
-
-  if (resultado == "A") {
-    info = ", se ha le ha informado a los demas usuarios el posible contacto";
-
-    var relacionUbicaciones = await db
-      .collection("RELACIONES")
-      .doc(llaveUsuario)
+    var usuarioPositivo = await db
+      .collection("U_NATURALES")
+      .where("I", "==", tipoID + " " + ID)
+      .limit(1)
       .get();
-    relacionUbicaciones = relacionUbicaciones.data().U;
 
-    var datosUbicaciones = [];
-    for (var i = 0; i < relacionUbicaciones.length; i++) {
-      var ubicacion = await db
-        .collection("UBICACIONES")
-        .doc(relacionUbicaciones[i])
+    const llaveUsuario = usuarioPositivo.docs[0].id;
+    const emailUsuarioCorreo = usuarioPositivo.docs[0].data().M;
+
+    email.enviarCorreo(
+      emailUsuarioCorreo,
+      "SeCoCo - Actualización de resultado de examen",
+      resultado
+    );
+
+    await db
+      .collection("U_NATURALES")
+      .doc(llaveUsuario)
+      .update({ X: resultado });
+
+    if (resultado == "A") {
+      info = ", se ha le ha informado a los demas usuarios el posible contacto";
+
+      var relacionUbicaciones = await db
+        .collection("RELACIONES")
+        .doc(llaveUsuario)
         .get();
-      datosUbicaciones.push(ubicacion.data());
-    }
+      relacionUbicaciones = relacionUbicaciones.data().U;
 
-    var ubicacionesCoincidentes = [];
-    for (var u = 0; u < datosUbicaciones.length; u++) {
-      var F = datosUbicaciones[u].F;
-      var HI = datosUbicaciones[u].HI;
-      var HF = datosUbicaciones[u].HF;
-      var Lat = datosUbicaciones[u].Lat;
-      var Lon = datosUbicaciones[u].Lon;
+      var datosUbicaciones = [];
+      for (var i = 0; i < relacionUbicaciones.length; i++) {
+        var ubicacion = await db
+          .collection("UBICACIONES")
+          .doc(relacionUbicaciones[i])
+          .get();
+        datosUbicaciones.push(ubicacion.data());
+      }
 
-      var ubicacionCoincidente = await db
-        .collection("UBICACIONES")
-        .where("Lat", ">=", Lat - 0.00004504504)
-        .where("Lat", "<=", Lat + 0.00004504504)
-        .get();
+      var ubicacionesCoincidentes = [];
+      for (var u = 0; u < datosUbicaciones.length; u++) {
+        var F = datosUbicaciones[u].F;
+        var HI = datosUbicaciones[u].HI;
+        var HF = datosUbicaciones[u].HF;
+        var Lat = datosUbicaciones[u].Lat;
+        var Lon = datosUbicaciones[u].Lon;
 
-      ubicacionCoincidente.docs.forEach(ub => {
-        var llave = ub.id;
-        ub = ub.data();
+        var ubicacionCoincidente = await db
+          .collection("UBICACIONES")
+          .where("Lat", ">=", Lat - 0.00004504504)
+          .where("Lat", "<=", Lat + 0.00004504504)
+          .get();
 
-        if (Lon - 0.00004504504 <= ub.Lon && ub.Lon <= Lon + 0.00004504504) {
-          if (!relacionUbicaciones.includes(llave)) {
-            if (HI <= ub.HI && ub.HI <= HF) {
-              if (ub.F == F) {
-                ubicacionesCoincidentes.push(llave);
+        ubicacionCoincidente.docs.forEach(ub => {
+          var llave = ub.id;
+          ub = ub.data();
+
+          if (Lon - 0.00004504504 <= ub.Lon && ub.Lon <= Lon + 0.00004504504) {
+            if (!relacionUbicaciones.includes(llave)) {
+              if (HI <= ub.HI && ub.HI <= HF) {
+                if (ub.F == F) {
+                  ubicacionesCoincidentes.push(llave);
+                }
               }
             }
           }
-        }
-      });
-    }
-    //console.log(ubicacionesCoincidentes);
-    var nombresSospechosos = await db
-      .collection("RELACIONES")
-      .where("U", "array-contains-any", ubicacionesCoincidentes)
-      .get();
-
-    var nombres = [];
-
-    nombresSospechosos.docs.forEach(n => {
-      nombres.push(n.id);
-    });
-    //console.log(nombres);
-    for (var c = 0; c < nombres.length; c++) {
-      var correo = await db
-        .collection("U_NATURALES")
-        .doc(nombres[c])
+        });
+      }
+      var nombresSospechosos = await db
+        .collection("RELACIONES")
+        .where("U", "array-contains-any", ubicacionesCoincidentes)
         .get();
 
-      correo = correo.data().M;
-      email.enviarCorreo(correo, "SeCoCo - Revisa tus sintomas", null);
+      var nombres = [];
+
+      nombresSospechosos.docs.forEach(n => {
+        nombres.push(n.id);
+      });
+      for (var c = 0; c < nombres.length; c++) {
+        var correo = await db
+          .collection("U_NATURALES")
+          .doc(nombres[c])
+          .get();
+
+        correo = correo.data().M;
+        email.enviarCorreo(correo, "SeCoCo - Revisa tus sintomas", null);
+      }
     }
+    res.status(200).send({ X: "Dato actualizado" + info });
+  } catch (error) {
+    res.status(400).send({ error });
+  } finally {
+    res.end();
   }
-  res.send({ X: "Dato actualizado" + info });
-  res.end();
 });
 
 /////////////////////////////////////////////// REPORTE ZONA ////////////////////////////////////////////////////////////////
@@ -667,141 +654,159 @@ app.get("/ZONAS", async (req, res) => {
   }
 });
 
-/////////////////////////////////////// HISTORIAL DESPLAZAMIENTOS ///////////////////////////////////////////////////////////
+/*********************************** HISTORIAL DESPLAZAMIENTOS ***********************************/
 
 app.post("/HISTORIAL-DESPLAZAMIENTOS", async (req, res) => {
-  const llaveUsuario = req.body.usuario;
-
-  var relacionUbicaciones = await db
-    .collection("RELACIONES")
-    .doc(llaveUsuario)
-    .get();
-  relacionUbicaciones = relacionUbicaciones.data().U;
-
-  var datosUbicaciones = [];
-  for (var i = 0; i < relacionUbicaciones.length; i++) {
-    var ubicacion = await db
-      .collection("UBICACIONES")
-      .doc(relacionUbicaciones[i])
-      .get();
-    datosUbicaciones.push(ubicacion.data());
-  }
-  res.send({ datosUbicaciones });
-
-  res.end();
-});
-
-/////////////////////////////////////// MANEJO AISLAMIENTO ///////////////////////////////////////////////////////////
-
-app.post("/MANEJO-AISLAMIENTO", async (req, res) => {
-  const localidad = req.body.Z;
-
-  var latMin, latMax, lonMin, lonMax;
-  //console.log("--------P-----------");
-  //console.log(zonas);
-  //console.log("********S************");
-  for (var i = 0; i < zonas.length; i++) {
-    //console.log(localidad+ ":",zonas[i].I, zonas[i].LatMi, zonas[i].LatMa, zonas[i].LonMi,zonas[i].LonMa);
-    if (zonas[i].I == localidad) {
-      latMin = zonas[i].LatMi;
-      latMax = zonas[i].LatMa;
-      lonMin = zonas[i].LonMi;
-      lonMax = zonas[i].LonMa;
-    }
-  }
-
-  var usuariosLocalidad = await db
-    .collection("U_NATURALES")
-    .where("Z", "==", localidad)
-    .get();
-
-  var activos = 0;
-  var posibles = 0;
-  var total = 0;
-
-  usuariosLocalidad.docs.forEach(u => {
-    total++;
-    if (u.data().X == "A") {
-      activos++;
-    } else if (u.data().X == "S" || u.data().X == "P" || u.data().X == "N") {
-      posibles++;
-    }
-  });
-
-  var rta = Number(activos) / Number(total);
-  posibles = posibles / total;
-
-  //console.log(total, rta, posibles, latMin, lonMin, latMax, lonMax);
-
-  res.send({
-    Activos: rta,
-    Posibles: posibles,
-    LatMin: latMin,
-    LonMin: lonMin,
-    LatMax: latMax,
-    LonMax: lonMax
-  });
-  res.end();
-});
-
-/////////////////////////////////////// MOVIMIENTO EN AISLAMIENTO //////////////////////////////////////////////////////
-
-app.post("/MOVIMIENTO-EN-AISLAMIENTO", async (req, res) => {
-  let Z = req.body.Z;
-
-  var usuariosDeLocalidad = await db
-    .collection("U_NATURALES")
-    .where("Z", "==", Z)
-    .get();
-
-  var nombres = [];
-  var datos = [];
-  usuariosDeLocalidad.docs.forEach(n => {
-    nombres.push(n.id);
-    datos.push(n.data());
-  });
-
-  var usuariosFueraDeLocalidad = [];
-
-  var info = {
-    nombre: "",
-    correo: "",
-    cedula: "",
-    usuario: "",
-    fecha: ""
-  };
-
-  var respuesta = [];
-
-  for (var n = 0; n < nombres.length; n++) {
+  try {
+    const llaveUsuario = req.body.usuario;
     var relacionUbicaciones = await db
       .collection("RELACIONES")
-      .doc(nombres[n])
+      .doc(llaveUsuario)
       .get();
-
     relacionUbicaciones = relacionUbicaciones.data().U;
-    for (var u = 0; u < relacionUbicaciones.length; u++) {
+    var datosUbicaciones = [];
+    for (var i = 0; i < relacionUbicaciones.length; i++) {
       var ubicacion = await db
         .collection("UBICACIONES")
-        .doc(relacionUbicaciones[u])
+        .doc(relacionUbicaciones[i])
+        .get();
+      datosUbicaciones.push(ubicacion.data());
+    }
+    res.status(200).send({ datosUbicaciones });
+  } catch (error) {
+    res.status(400).send({ error });
+  } finally {
+    res.end();
+  }
+});
+
+/*********************************** Identificar localidad basado en latitud y longitud ***********************************/
+async function identificarLocalidad(latitud, longitud) {
+  var codigo = "";
+  try {
+    var response = await fetch(
+      "https://cdn.glitch.com/d710e170-2c7b-42e6-b0a4-24b443cd0e0f%2FS2VFUCBUcllJTmcgbW9USGVyRlVDS2Vy.geojson?v=1611376641957"
+    ).then(response => response.text());
+    var GEO = JSON.parse(response);
+    await GEO.features.forEach(obj => {
+      var polygon = obj.geometry.coordinates[0];
+      //         Latitud: -74.112862  Longitud: 4.655272
+      var result = inside([latitud, longitud], polygon);
+      if (result) {
+        codigo = obj.properties.CODIGO_LOC;
+      }
+    });
+  } catch (error) {
+    codigo = "NaN";
+  }
+  return codigo;
+}
+
+/*********************************** MANEJO AISLAMIENTO ***********************************/
+
+app.post("/MANEJO-AISLAMIENTO", async (req, res) => {
+  try {
+    const longitud = req.body.Longitud;
+    const latitud = req.body.Latitud;
+
+    var localidad = await identificarLocalidad(longitud, latitud);
+    var usuariosLocalidad = await db
+      .collection("U_NATURALES")
+      .where("Z", "==", localidad)
+      .get();
+
+    var activos = 0.0;
+    var posibles = 0.0;
+    var total = 0.0;
+
+    usuariosLocalidad.docs.forEach(u => {
+      total++;
+      if (u.data().X == "A") {
+        activos++;
+      } else if (u.data().X == "S" || u.data().X == "P" || u.data().X == "N") {
+        posibles++;
+      }
+    });
+
+    var rta = Number(activos) / Number(total);
+    posibles = posibles / total;
+    res.status(200).send({
+      Activos: rta,
+      Posibles: posibles,
+      Localidad: localidad + ""
+    });
+  } catch (error) {
+    res.status(400).send({ Activos: 0.0, Posibles: 0.0, Localidad: "Error" });
+  } finally {
+    res.end();
+  }
+});
+
+/************************************ MOVIMIENTO EN AISLAMIENTO ************************************/
+
+app.post("/MOVIMIENTO-EN-AISLAMIENTO", async (req, res) => {
+  try {
+    let Z = req.body.Z;
+
+    var usuariosDeLocalidad = await db
+      .collection("U_NATURALES")
+      .where("Z", "==", Z)
+      .get();
+
+    var nombres = [];
+    var datos = [];
+
+    usuariosDeLocalidad.docs.forEach(n => {
+      nombres.push(n.id);
+      datos.push(n.data());
+    });
+
+    var usuariosFueraDeLocalidad = [];
+    var respuesta = [];
+
+    for (var n = 0; n < nombres.length; n++) {
+      var relacionUbicaciones = await db
+        .collection("RELACIONES")
+        .doc(nombres[n])
         .get();
 
-      if (
-        ubicacion.data().Z != Z
-        // &&!usuariosFueraDeLocalidad.includes(nombres[n])
-      ) {
-        //usuariosFueraDeLocalidad.push(nombres[n]);
-        info.usuario = nombres[n];
-        info.nombre = datos[n].N;
-        info.correo = datos[n].M;
-        info.cedula = datos[n].I;
-        info.fecha = ubicacion.data().F;
-        respuesta.push(info);
+      relacionUbicaciones = relacionUbicaciones.data().U;
+      for (var u = 0; u < relacionUbicaciones.length; u++) {
+        var ubicacion = await db
+          .collection("UBICACIONES")
+          .doc(relacionUbicaciones[u])
+          .get();
+
+        if (
+          ubicacion.data().Z != Z
+          // &&!usuariosFueraDeLocalidad.includes(nombres[n])
+        ) {
+          var info = {
+            nombre: datos[n].N,
+            correo: datos[n].M,
+            cedula: datos[n].I,
+            usuario: nombres[n],
+            fecha: ubicacion.data().F
+          };
+          respuesta.push(info);
+        }
       }
     }
+    /*--------------------- Que enviamos? el correo, la cedula, el usuario?--------------------*/
+    res.status(200).send({ Z: respuesta });
+  } catch (error) {
+    res.status(400).send({
+      Z: [
+        {
+          nombre: "Error",
+          correo: "Error",
+          cedula: "Error",
+          usuario: "Error",
+          fecha: "Error"
+        }
+      ]
+    });
+  } finally {
+    res.end();
   }
-  /*--------------------- Que enviamos? el correo, la cedula, el usuario?--------------------*/
-
-  res.send({ Z: respuesta });
-  res.end();
 });
