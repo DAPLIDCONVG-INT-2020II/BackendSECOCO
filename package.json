@@ -12,6 +12,7 @@
     "body-parser": "^1.19.0",
     "express": "^4.17.1",
     "firebase-admin": "^9.4.2",
-    "nodemailer": "^6.4.17"
+    "nodemailer": "^6.4.17",
+    "point-in-polygon": "^1.0.1"
   }
 }
