@@ -2,7 +2,7 @@
 <html lang="es">
   <head>
     <meta charset="utf-8" />
-    <title>HTML</title>
+    <title>SECOCO</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!--Link estilos
   <link rel="stylesheet" href="styles.css"> -->
@@ -14,53 +14,354 @@
       box-sizing: border-box;
       padding: 0;
     }
-    
+
     html {
+      padding: 0;
+      margin: 0;
+      width: 100vw;
+      height: auto;
+    }
+
+    body {
+      padding: 0;
+      margin: 0;
+      font-family: "Roboto", sans-serif;
+    }
+
+    div {
+      margin: 0;
+    }
+
+    iframe {
+      width: 560px;
+      height: 315px;
+    }
+
+    hr {
+      width: 50%;
+      background: black;
+      color: black;
+    }
+
+    .flex {
+      background-color: white;
+      display: flex;
+      font-size: 40px;
       width: 100vw;
       height: 100vh;
     }
-    
-    body {
-      background-color: #0c2461;
-      font-family: "Roboto", sans-serif;
-    }
-    
-    .flex {
-      display: flex;
-      font-size: 40px;
-    }
-    
+
     .block {
-      color: white;
+      color: black;
       width: 50vw;
       height: 50vh;
       margin: auto;
       text-align: center;
-      padding-top: 12vh;
+    }
+
+    .foto {
+      width: 60%;
+      height: auto;
+    }
+
+    .desc-video {
+      background: rgb(98, 0, 238);
+      position: relative;
+      color: white;
+      text-align: center;
+      padding: 0;
+      height: 100vh;
+    }
+
+    .info {
+      color: white;
+      width: 50vw;
+      text-align: center;
+      margin: auto;
+      padding-top: 5%;
+    }
+
+    .firmas {
+      font-size: 15px;
     }
     
-    img {
-      width: 100%;
-      height: auto;
+    
+    button {
+	background-color:rgb(98, 0, 238);
+	border-radius:28px;
+	border:1px solid white;
+	display:inline-block;
+	cursor:pointer;
+	color:#ffffff;
+	font-size:17px;
+	padding:16px 31px;
+	text-decoration:none;
+	text-shadow:0px 1px 0px #2f6627;
+}
+button:hover {
+	background-color:rgb(98, 0, 238);
+}
+button:active {
+	position:relative;
+	top:1px;
+}
+
+
+    @media only screen and (max-width: 600px) {
+      #principal {
+        font-size: 30px;
+      }
+      .flex {
+        flex-direction: column;
+        font-size: 20px;
+        justify-content: space-between;
+        height: 30%;
+      }
+
+      .foto {
+        width: auto;
+        height: 80%;
+      }
+
+      .block {
+        color: black;
+        width: 100vw;
+        text-align: center;
+      }
+      .info {
+        width: 70vw;
+      }
+
+      iframe {
+        width: 80vw;
+        height: auto;
+      }
+
+      #Capa_3 {
+        padding-top: 20px;
+      }
+      .desc-video {
+        height: 110vh;
+      }
     }
   </style>
   <body>
     <div class="flex">
-      <div class="block">
+      <div class="block" id="principal">
         <h1>
-          SECOCO <br />
-          🔥 Firestore <br />
-          🚀 Node.js
+          SECOCO
         </h1>
-        <h4 style="font-size: 18px">
-          Creado por Brandon R, Diego M, Cristian C
-        </h4>
+        <p>
+          Una app para los tiempos de pandemia
+        </p>
+        <hr />
+        <p class="firmas">
+          Colaboradores Brandon R, Diego M, Cristian C
+        </p>
       </div>
       <div class="block">
-        <img
+        <svg
+          class="foto"
+          id="Capa_1"
+          data-name="Capa 1"
+          xmlns="http://www.w3.org/2000/svg"
+          viewbox="0 0 431.23 492.84"
+        >
+          <defs>
+            <style>
+              .cls-1 {
+                fill: #6200d8;
+              }
+              .cls-2 {
+                fill: #fff;
+              }
+              .cls-3 {
+                fill: #fafbfc;
+                opacity: 0.3;
+                isolation: isolate;
+              }
+              .cls-4 {
+                fill: none;
+                stroke: #fff;
+                stroke-miterlimit: 10;
+                stroke-width: 3px;
+              }
+            </style>
+          </defs>
+          <title>man con tapabocas en svg</title>
+          <g id="Capa_2" data-name="Capa 2">
+            <path
+              class="cls-1"
+              d="M182.84,59a.74.74,0,0,1-.66.57c-.11,0-.07,0,.12,0l.64.19c.45.14.93.26,1.37.43l-.66-.39.11.11-.38-.67,0,.15v-.8a6.75,6.75,0,0,0-.11,1.85c.06.63.19,1.2.21,1.79a6.78,6.78,0,0,1-.14,1.49,7.44,7.44,0,0,0,0,2.21l2.89-.8a12.69,12.69,0,0,0-1.54-2.94c-.28-.42-.57-.84-.83-1.28-.12-.21-.25-.43-.36-.66a3.23,3.23,0,0,1-.23-.57l-2.51,1.46s-.1-.2-.12-.22,0-.07,0,0a1.85,1.85,0,0,1,0,.23c0,.23,0,.46,0,.69a5.26,5.26,0,0,0,.51,1.87,12.78,12.78,0,0,0,.68,1.26l.19.35s.15.33.07.14a1.42,1.42,0,0,1,.1.29.86.86,0,0,1,.06.23c0,.18,0,.1,0-.26l.39-.66a2.42,2.42,0,0,0-.74,1.17,2.38,2.38,0,0,0,.25,1.63,2.9,2.9,0,0,0,1,1c.13.09.27.17.41.25a2.26,2.26,0,0,1,.26.16q-.13-.12.06.06L185.68,67l-1.22-.6c-.16-.08-.33-.15-.49-.24s0,.06-.2-.17a13,13,0,0,1-1.21-2.16l-2.05,2.05c-.24-.17.26.35.09.11a3.18,3.18,0,0,1,.23.4,10,10,0,0,1,.43,1,9,9,0,0,0,1.56,2.47,1.51,1.51,0,0,0,2.5-.67c.46-1.48-.72-2.55-2-2.94a1.5,1.5,0,1,0-.8,2.89,2.15,2.15,0,0,1,.29.1.16.16,0,0,1-.14-.11.67.67,0,0,1-.23-.73l2.51-.67a6.93,6.93,0,0,1-1.18-2.08A5.16,5.16,0,0,0,182,63.33a1.5,1.5,0,0,0-1.82.24,1.56,1.56,0,0,0-.23,1.81,10.82,10.82,0,0,0,1.62,2.69,7.19,7.19,0,0,0,2.57,1.56A1.5,1.5,0,0,0,186,67.27a6.69,6.69,0,0,0-1.2-.85c-.27-.17,0,0,.05.11-.4.78-.44,1-.14.77a2.31,2.31,0,0,0,.31-.39c.59-1,0-2.3-.46-3.22-.19-.35-.4-.69-.58-1,0,0-.25-.54-.18-.35,0,0-.16-.6-.12-.35-.06-.4,0-.82,0-1.22a3,3,0,0,0-.73-1.7c-1-1.16-3,.09-2.51,1.46a12.65,12.65,0,0,0,1.53,2.94c.28.42.57.84.83,1.28q.2.33.36.66a2.87,2.87,0,0,1,.24.57,1.5,1.5,0,1,0,2.89-.8,5,5,0,0,1,.12-1.17,8,8,0,0,0,.16-1.82c0-.57-.16-1.18-.22-1.71a13.75,13.75,0,0,1,.07-1.44c0-1.62-1.79-1.87-3-2.24-1.38-.41-2.93-.15-3.4,1.42a1.5,1.5,0,1,0,2.89.79Z"
+              transform="translate(-7.38 -9.01)"
+            />
+            <path
+              class="cls-1"
+              d="M182.83,53.88c2.95.66,5.95.41,8.94.6a1.51,1.51,0,0,0,1.5-1.5,1.54,1.54,0,0,0-1.5-1.5c-1.41-.09-2.81-.07-4.22-.1-.69,0-1.39-.05-2.09-.11a12.5,12.5,0,0,1-1.83-.29,1.5,1.5,0,0,0-.8,2.9Z"
+              transform="translate(-7.38 -9.01)"
+            />
+          </g>
+          <path
+            class="cls-1"
+            d="M269.2,55.21A46.2,46.2,0,1,1,223,9,46.21,46.21,0,0,1,269.2,55.21Zm-15.4,77H192.2A30.77,30.77,0,0,0,161.4,163V286.23h30.8V409.44h61.6V286.23h30.8V163A30.77,30.77,0,0,0,253.8,132.22Zm30.8,188.09v31.1c71.75,8.49,123.21,31.23,123.21,58,0,34-82.75,61.6-184.81,61.6S38.19,443.46,38.19,409.44c0-26.8,51.49-49.55,123.21-58v-31.1c-83.57,9.14-154,37.66-154,89.13,0,63.83,108.29,92.4,215.62,92.4s215.62-28.57,215.62-92.4C438.62,358,368.17,329.45,284.6,320.31Z"
+            transform="translate(-7.38 -9.01)"
+          />
+          <path
+            class="cls-2"
+            d="M252.07,78.28a4,4,0,0,1-1.71,3.2,46.57,46.57,0,0,1-27.75,9.38A54.29,54.29,0,0,1,195,81.5a4,4,0,0,1-1.83-3.28V56.63a121.39,121.39,0,0,0,14.09-4.28c9.25-3.43,10.66-5.25,15.38-5.35,4.42-.09,6.09,1.45,16.65,5.35,5.44,2,10,3.42,12.81,4.28Z"
+            transform="translate(-7.38 -9.01)"
+          />
+          <path
+            class="cls-3"
+            d="M222.61,47c-4.72.1-6.13,1.92-15.38,5.35a121.39,121.39,0,0,1-14.09,4.28V78.22A4,4,0,0,0,195,81.5a51,51,0,0,0,9.86,5.33V75.74c0-3.52,2.25-6.76,5.92-8.49,11.09-5.22,17.79-14.56,20.08-18.2C227.16,47.56,225.46,46.94,222.61,47Z"
+            transform="translate(-7.38 -9.01)"
+          />
+          <path
+            class="cls-2"
+            d="M195.22,57.14c-7.28-2.59-15.11-3.64-22.07-7.09-1.73-.86-3.25,1.73-1.52,2.59,7.22,3.57,15.25,4.71,22.79,7.39,1.82.65,2.61-2.25.8-2.89Z"
+            transform="translate(-7.38 -9.01)"
+          />
+          <path
+            class="cls-2"
+            d="M251.49,60c4.46-1.56,9-2.77,13.53-4.21s8.86-3.1,13.18-4.93a1.5,1.5,0,1,0-1.51-2.59q-6.35,2.68-12.92,4.77c-4.35,1.38-8.77,2.56-13.07,4.07-1.82.63-1,3.53.79,2.89Z"
+            transform="translate(-7.38 -9.01)"
+          />
+          <line class="cls-4" x1="169.28" y1="59.2" x2="187.53" y2="68.1" />
+          <line class="cls-4" x1="243.15" y1="69.95" x2="263.74" y2="57.14" />
+        </svg>
+        <!-- <img class="foto"
           src="https://64.media.tumblr.com/24af2bad23099e7adccd100f36a8dff0/2c53b409f59c64e0-3d/s2048x3072/d1ca3f018c36761ed0a448451423cb025d6b4d19.png"
-        />
+        />-->
       </div>
     </div>
+    <div class="desc-video">
+      <div class="info">
+        <h1>
+          Descripción
+        </h1>
+        <p>
+          Registrate, permitenos saber tu ubicación, reporta tus sintomas y si
+          has tenido contacto con alguien con COVID-19 te notificaremos. Tambien
+          podras ver el estado de tu localidad por si deseas tomar una
+          cuarentena preventiva o tener más precaución.
+        </p>
+        <p style="font-weight: bold; font-size: 12px">
+          Nota: Necesitas al menos un 25% de bateria para que puedas utilizar
+          adecuadamente las funciones del app.
+        </p>
+        <h2>
+          Información tecnica
+        </h2>
+        <p>
+          Este es un servidor con servicios API REST, desplegado en Glitch y
+          elaborado en Node.js utilizando Express como framework, mientras la
+          capa de persistencia pertenece a Google Cloud Firestore.
+        </p>
+      </div>
+      <div>
+        <iframe
+          width="560"
+          height="315"
+          src="https://www.youtube.com/embed/Gw0ihgBilqw"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </div>
+    <div class="flex">
+      <div class="block">
+        <svg
+          class="foto"
+          id="Capa_3"
+          data-name="Capa 1"
+          xmlns="http://www.w3.org/2000/svg"
+          viewbox="0 0 575 571"
+        >
+          <defs>
+            <style>
+              .cls-1 {
+                fill: #6200ee;
+              }
+              .cls-2 {
+                fill: #fff;
+              }
+              .cls-3 {
+                fill: #43355d;
+              }
+              .cls-4 {
+                fill: #6200d8;
+              }
+              .cls-5 {
+                fill: #fafbfc;
+                opacity: 0.3;
+                isolation: isolate;
+              }
+              .cls-6 {
+                fill: none;
+                stroke: #fff;
+                stroke-miterlimit: 10;
+                stroke-width: 3px;
+              }
+            </style>
+          </defs>
+          <title>LogoSecoco en SVG</title>
+          <rect class="cls-1" width="575" height="571" rx="86" />
+          <rect
+            class="cls-2"
+            x="5.03"
+            y="4"
+            width="565.94"
+            height="562"
+            rx="173.79"
+          />
+          <path class="cls-3" d="M146,107" transform="translate(-12 -14)" />
+          <path
+            class="cls-4"
+            d="M259.93,97.87a.79.79,0,0,1-.66.57c-.11,0-.08,0,.11,0l.64.19c.46.14.93.26,1.38.43l-.66-.38.11.1-.39-.66,0,.14v-.8a6.78,6.78,0,0,0-.12,1.85c.07.64.2,1.21.22,1.8a6.91,6.91,0,0,1-.15,1.49,7.06,7.06,0,0,0,0,2.2l2.89-.8a12.93,12.93,0,0,0-1.55-2.94c-.28-.42-.56-.84-.82-1.27-.13-.22-.25-.44-.36-.67a2.2,2.2,0,0,1-.23-.57L257.84,100s-.11-.2-.13-.21,0-.08,0,0,0,.15,0,.22c0,.24,0,.47,0,.7a5.36,5.36,0,0,0,.5,1.87c.2.43.45.84.68,1.25l.19.35s.16.33.08.14c0,.1.07.2.1.29l.06.23c0,.18,0,.1,0-.25l.38-.67a2.4,2.4,0,0,0-.73,1.17,2.32,2.32,0,0,0,.25,1.63,2.74,2.74,0,0,0,1,1l.4.25.27.16c-.09-.08-.08-.06.05.07l1.82-2.36-1.22-.6-.48-.23c-.22-.13,0,.06-.2-.18a12,12,0,0,1-1.22-2.16l-2.05,2c-.23-.16.26.36.09.11a4.23,4.23,0,0,1,.24.4c.21.41.22.5.43,1a8.67,8.67,0,0,0,1.55,2.46,1.52,1.52,0,0,0,2.51-.66c.46-1.48-.73-2.56-2-2.94a1.51,1.51,0,0,0-1.84,1,1.53,1.53,0,0,0,1,1.85,1.68,1.68,0,0,1,.3.1.16.16,0,0,1-.15-.11.68.68,0,0,1-.22-.74l2.5-.66a7.42,7.42,0,0,1-1.18-2.08,5.24,5.24,0,0,0-1.73-2.34,1.51,1.51,0,0,0-1.82.24,1.59,1.59,0,0,0-.24,1.82,11.33,11.33,0,0,0,1.62,2.69,7.35,7.35,0,0,0,2.58,1.55,1.5,1.5,0,0,0,1.82-2.35,6.81,6.81,0,0,0-1.21-.86c-.26-.17,0,0,.05.11-.39.79-.44,1-.14.77a2.37,2.37,0,0,0,.32-.39c.58-1,0-2.29-.46-3.21-.19-.35-.4-.69-.59-1,0-.06-.24-.55-.17-.36,0,0-.16-.59-.13-.35-.05-.4,0-.81-.05-1.21a3,3,0,0,0-.73-1.71c-.95-1.16-3,.09-2.51,1.46a12.56,12.56,0,0,0,1.54,3c.28.42.56.84.82,1.27.13.22.26.44.37.66a3.14,3.14,0,0,1,.24.57,1.53,1.53,0,0,0,1.84,1,1.55,1.55,0,0,0,1.05-1.85,4.52,4.52,0,0,1,.12-1.17,9.26,9.26,0,0,0,.16-1.82c0-.57-.17-1.18-.22-1.71a11.48,11.48,0,0,1,.06-1.44c0-1.61-1.78-1.87-3-2.23-1.38-.42-2.93-.15-3.4,1.41a1.5,1.5,0,1,0,2.89.8Z"
+            transform="translate(-12 -14)"
+          />
+          <path
+            class="cls-4"
+            d="M259.92,92.77c2.94.66,5.95.41,8.93.61a1.5,1.5,0,0,0,0-3c-1.4-.09-2.81-.08-4.21-.11-.7,0-1.4,0-2.1-.11a11.08,11.08,0,0,1-1.82-.28,1.5,1.5,0,1,0-.8,2.89Z"
+            transform="translate(-12 -14)"
+          />
+          <path
+            class="cls-4"
+            d="M344.29,95.1a46.21,46.21,0,1,1-46.2-46.2A46.22,46.22,0,0,1,344.29,95.1Zm-15.4,77H267.28a30.79,30.79,0,0,0-30.8,30.8V326.12h30.8V449.33h61.61V326.12h30.8V202.91A30.79,30.79,0,0,0,328.89,172.11Zm30.8,188.09v31.11c71.74,8.48,123.21,31.22,123.21,58,0,34-82.75,61.61-184.81,61.61s-184.82-27.59-184.82-61.61c0-26.8,51.5-49.54,123.21-58V360.2c-83.56,9.15-154,37.66-154,89.13,0,63.83,108.29,92.41,215.62,92.41S513.7,513.16,513.7,449.33C513.7,397.86,443.25,369.35,359.69,360.2Z"
+            transform="translate(-12 -14)"
+          />
+          <path
+            class="cls-2"
+            d="M329.16,117.18a4,4,0,0,1-1.72,3.19,46.54,46.54,0,0,1-27.75,9.38,54.29,54.29,0,0,1-27.63-9.35,4,4,0,0,1-1.84-3.28V95.52a122.14,122.14,0,0,0,14.1-4.28c9.25-3.43,10.65-5.25,15.37-5.35,4.43-.09,6.09,1.46,16.66,5.35,5.43,2,9.94,3.42,12.81,4.28Z"
+            transform="translate(-12 -14)"
+          />
+          <path
+            class="cls-5"
+            d="M299.69,85.89c-4.72.1-6.12,1.92-15.37,5.35a122.14,122.14,0,0,1-14.1,4.28v21.6a4,4,0,0,0,1.84,3.28,50.09,50.09,0,0,0,9.85,5.32V114.63c0-3.52,2.26-6.76,5.92-8.49,11.1-5.21,17.79-14.55,20.09-18.2C304.25,86.45,302.54,85.83,299.69,85.89Z"
+            transform="translate(-12 -14)"
+          />
+          <path
+            class="cls-2"
+            d="M272.3,96c-7.28-2.59-15.1-3.64-22.07-7.09-1.72-.85-3.24,1.73-1.51,2.59,7.22,3.57,15.25,4.72,22.79,7.39,1.82.65,2.6-2.25.79-2.89Z"
+            transform="translate(-12 -14)"
+          />
+          <path
+            class="cls-2"
+            d="M328.58,98.92c4.46-1.57,9-2.77,13.53-4.22s8.86-3.09,13.18-4.93a1.51,1.51,0,0,0,.54-2,1.55,1.55,0,0,0-2.06-.54c-4.22,1.8-8.54,3.39-12.92,4.78s-8.76,2.55-13.07,4.06c-1.81.64-1,3.54.8,2.9Z"
+            transform="translate(-12 -14)"
+          />
+          <line class="cls-6" x1="241.75" y1="93.1" x2="260" y2="102" />
+          <line class="cls-6" x1="315.62" y1="103.85" x2="336.21" y2="91.04" />
+        </svg>
+        <!--<img    
+          src="https://64.media.tumblr.com/45590a1a0661343e2e04aa8836373706/2c53b409f59c64e0-80/s1280x1920/a0097906d2219e07a782786f37fbdedde79a429d.png"
+        />-->
+      </div>
+      <div class="block">
+        <h1>Descarga <br />la app para Android 📱</h1>
+          <button onclick="location.href = 'https://cdn.glitch.com/f197efe4-7f2f-433d-bda0-be968645eedb%2FSeCoCoV1.1.apk?v=1613334995446';" id="myButton" class="button" >Descargar</button>
+    </div>
+      </div>
   </body>
 </html>
