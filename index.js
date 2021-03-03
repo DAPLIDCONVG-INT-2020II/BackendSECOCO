@@ -48,6 +48,18 @@ async function cargarZonas() {
   }
 }
 
+/////////////////////////////////////////////////////// KEEP ALIVE //////////////////////////////////////////////////////////
+
+app.get("/KEEP-ALIVE", async (req, res) => {
+  try {
+    res.status(200);
+  } catch (error) {
+    res.status(400);
+  } finally {
+    res.end();
+  }
+});
+
 ///////////////////////////////////////////////////////// INGRESO //////////////////////////////////////////////////////////
 
 /* Formato de entrada
@@ -696,6 +708,9 @@ async function identificarLocalidad(latitud, longitud) {
         codigo = obj.properties.CODIGO_LOC;
       }
     });
+    if (codigo == "") {
+      codigo = "No se reconoce la localidad";
+    }
   } catch (error) {
     codigo = "NaN";
   }
@@ -762,7 +777,7 @@ app.post("/MOVIMIENTO-EN-AISLAMIENTO", async (req, res) => {
     });
 
     var usuariosFueraDeLocalidad = [];
-    var respuesta = [];
+    var respuesta = new Set();
 
     for (var n = 0; n < nombres.length; n++) {
       var relacionUbicaciones = await db
@@ -777,10 +792,7 @@ app.post("/MOVIMIENTO-EN-AISLAMIENTO", async (req, res) => {
           .doc(relacionUbicaciones[u])
           .get();
 
-        if (
-          ubicacion.data().Z != Z
-          // &&!usuariosFueraDeLocalidad.includes(nombres[n])
-        ) {
+        if (ubicacion.data().Z != Z) {
           var info = {
             nombre: datos[n].N,
             correo: datos[n].M,
@@ -788,12 +800,12 @@ app.post("/MOVIMIENTO-EN-AISLAMIENTO", async (req, res) => {
             usuario: nombres[n],
             fecha: ubicacion.data().F
           };
-          respuesta.push(info);
+          respuesta.add(info);
         }
       }
     }
     /*--------------------- Que enviamos? el correo, la cedula, el usuario?--------------------*/
-    res.status(200).send({ Z: respuesta });
+    res.status(200).send({ Z: Array.from(respuesta) });
   } catch (error) {
     res.status(400).send({
       Z: [
